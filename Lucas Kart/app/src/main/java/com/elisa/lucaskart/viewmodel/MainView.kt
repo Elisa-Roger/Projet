@@ -1,7 +1,10 @@
 package com.elisa.lucaskart.viewmodel
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elisa.lucaskart.model.ProductAPI
@@ -23,6 +26,9 @@ class MainView : ViewModel() {
     var description = mutableStateOf("")
     var price = mutableStateOf(0)
     val dialogShown = mutableStateOf(false)
+    val editDialogShown = mutableStateOf(false)
+    val deleteDialogShown = mutableStateOf(false)
+    val productId = mutableStateOf(0)
     val runInProgress = mutableStateOf(false)
     val errorMessage = mutableStateOf("")
 
@@ -35,7 +41,7 @@ class MainView : ViewModel() {
     fun loadList() {
         runInProgress.value = true
         errorMessage.value = ""
-       // myList.clear()
+        // myList.clear()
         viewModelScope.launch(Dispatchers.Default) {
             try {
                 val newData = ProductAPI.allProduct()
@@ -52,18 +58,73 @@ class MainView : ViewModel() {
         }
     }
 
-    fun createProd(nom: String, image: String, description:String, price: Int) {
+    fun createProd(nom: String, image: String, description: String, price: Int) {
         viewModelScope.launch(Dispatchers.Default) {// Cela permet d'exécuter le bloc de code dans un thread non principal.
             // Lance une coroutine dans le contexte du ViewModelScope sur le dispatcher par défaut pour des opérations non bloquantes.
             try {
                 println("Création d'un produit")
-                ProductAPI.createProd(name = nom, image = image, description = description, price = price) //Appel d'une fonction createProd de l'API ProductAPI
-                val newProd = ProduitBean(product_name = nom, product_image = image, product_description = description,product_price = price) //Création d'un nouvel objet ProduitBean représentant le produit
+                ProductAPI.createProd(
+                    name = nom,
+                    image = image,
+                    description = description,
+                    price = price
+                ) //Appel d'une fonction createProd de l'API ProductAPI
+                val newProd = ProduitBean(
+                    product_name = nom,
+                    product_image = image,
+                    product_description = description,
+                    product_price = price
+                ) //Création d'un nouvel objet ProduitBean représentant le produit
                 launch(Dispatchers.Main) {// Bascule vers le thread principal pour effectuer des modifications de l'UI.
-                   myList.add(newProd) //ajoute le nouveau produit à une liste myList
+                    myList.add(newProd) //ajoute le nouveau produit à une liste myList
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun deleteProd(productId: Long) {
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                println("Suppression du produit avec ID : $productId")
+                ProductAPI.deleteProduct(productId)
+                launch(Dispatchers.Main) {
+                    val index = myList.indexOfFirst { it.product_id == productId.toInt() }
+                    if (index != -1) {
+                        myList.removeAt(index)
+                    }
+                    println("Produit supprimé de la liste")
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) {
+                    errorMessage.value = "Erreur : ${e.message}"
+                }
+            }
+        }
+    }
+
+    fun updateProd(productId: Long, updatedProd: ProduitBean) {
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                println("Modification du produit avec ID : $productId")
+                // Appel de la fonction d'API pour mettre à jour le produit
+                ProductAPI.updateProduct(productId, updatedProd)
+                // Mettre à jour la liste locale si nécessaire
+                launch(Dispatchers.Main) {
+                    val index = myList.indexOfFirst { it.product_id == productId.toInt() }
+                    if (index != -1) {
+                        // Remplacer l'ancien produit par le produit mis à jour
+                        myList[index] = updatedProd
+                    }
+                    println("Produit mis à jour dans la liste")
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) {
+                    errorMessage.value = "Erreur : ${e.message}"
+                }
             }
         }
     }

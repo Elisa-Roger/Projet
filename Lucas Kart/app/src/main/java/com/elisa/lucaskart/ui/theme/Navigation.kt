@@ -18,6 +18,7 @@ sealed class Routes(val route: String) {
 
     // Route 1
     data object NewHomeScreen : Routes("NewHomeScreen")
+
     //Route 2
     data object ShopScreen : Routes("ShopScreen")
 
@@ -34,12 +35,11 @@ sealed class Routes(val route: String) {
 @Composable
 fun AppNavigation() {
 
-    val navHostController : NavHostController = rememberNavController()
+    val navHostController: NavHostController = rememberNavController()
 
     //viewModel appartient au framework peremt de récupérer une instance déjà existante s'il en existe une
-    val mainViewModel:MainView = viewModel()
+    val mainViewModel: MainView = viewModel()
     val prodViewModel: MainView = viewModel()
-
 
 
     //Import version avec Composable
@@ -47,7 +47,7 @@ fun AppNavigation() {
         //Route 1 vers 1ere page
         composable(Routes.NewHomeScreen.route) {
             //on peut passer le navHostController à un écran s'il déclenche des navigations
-            NewHomeScreen(navHostController, mainViewModel=mainViewModel)
+            NewHomeScreen(navHostController, mainViewModel = mainViewModel)
         }
         //Route 2
         composable(Routes.ShopScreen.route) {

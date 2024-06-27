@@ -1,5 +1,6 @@
 package com.elisa.lucaskart.ui.theme.screens
 
+import android.app.Dialog
 import android.content.res.Configuration
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -20,6 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.elisa.lucaskart.R
+import com.elisa.lucaskart.model.ProductAPI
 import com.elisa.lucaskart.model.ProduitBean
 import com.elisa.lucaskart.model.productList
 import com.elisa.lucaskart.ui.theme.LucasKartTheme
@@ -175,8 +181,6 @@ fun ShopScreen(
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text("Créer un produit")
                 }
-
-
                 if (prodViewModel.dialogShown.value) {
                     AlertDialog(
                         onDismissRequest = {
@@ -245,6 +249,143 @@ fun ShopScreen(
                 }
             }
         }
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = { prodViewModel.editDialogShown.value = true },
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                modifier = Modifier.padding(end = 16.dp), // Espacement à droite
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary) // Couleur de fond du bouton
+            ) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Localized description",
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Modifier un produit")
+            }
+// Dialog for editing a product
+            if (prodViewModel.editDialogShown.value) {
+                AlertDialog(
+                    onDismissRequest = {
+                        prodViewModel.editDialogShown.value = false
+                    },
+                    title = { Text(text = "Modifier un produit") },
+                    text = {
+                        Column {
+                            TextField(
+                                value = prodViewModel.productId.value.toString(),
+                                onValueChange = { prodViewModel.productId.value = it.toLong() },
+                                label = { Text("ID du produit") }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextField(
+                                value = prodViewModel.name.value,
+                                onValueChange = { prodViewModel.name.value = it },
+                                label = { Text("Nom du produit") }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextField(
+                                value = prodViewModel.image.value,
+                                onValueChange = { prodViewModel.image.value = it },
+                                label = { Text("Image du produit") }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextField(
+                                value = prodViewModel.description.value,
+                                onValueChange = { prodViewModel.description.value = it },
+                                label = { Text("Description du produit") }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TextField(
+                                value = prodViewModel.price.value.toString(),
+                                onValueChange = { prodViewModel.price.value = it.toInt() },
+                                label = { Text("Prix du produit") }
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                println("click test modifier")
+                                val updatedProduct = ProduitBean(
+                                    prodViewModel.productId.value.toInt(),
+                                    prodViewModel.name.value,
+                                    prodViewModel.image.value,
+                                    prodViewModel.description.value,
+                                    prodViewModel.price.value
+                                )
+                                prodViewModel.updateProd(prodViewModel.productId.value, updatedProduct)
+                                prodViewModel.editDialogShown.value = false
+                            }
+                        ) {
+                            Text("Modifier")
+                        }
+                    },
+                    dismissButton = {
+                        Button(
+                            onClick = { prodViewModel.editDialogShown.value = false }
+                        ) {
+                            Text("Annuler")
+                        }
+                    }
+                )
+            }
+            Button(
+                onClick = { prodViewModel.deleteDialogShown.value = true },
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                modifier = Modifier.padding(start = 16.dp), // Espacement à gauche
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary) // Couleur de fond du bouton
+            ) {
+                Icon(
+                    Icons.Filled.Clear,
+                    contentDescription = "Localized description",
+                    modifier = Modifier.size(ButtonDefaults.IconSize)
+                )
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text("Supprimer un produit")
+            }
+        }
+// Dialog for deleting a product
+        if (prodViewModel.deleteDialogShown.value) {
+            AlertDialog(
+                onDismissRequest = {
+                    prodViewModel.deleteDialogShown.value = false
+                },
+                title = { Text(text = "Supprimer un produit") },
+                text = {
+                    TextField(
+                        value = prodViewModel.productId.value.toString(),
+                        onValueChange = { prodViewModel.productId.value = it.toLong() },
+                        label = { Text("ID du produit") }
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            println("click test supprimer")
+                            println(prodViewModel.productId.value)
+                            prodViewModel.deleteProd(prodViewModel.productId.value)
+                            prodViewModel.deleteDialogShown.value = false
+                        }
+                    ) {
+                        Text("Supprimer")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { prodViewModel.deleteDialogShown.value = false }
+                    ) {
+                        Text("Annuler")
+                    }
+                }
+            )
+        }
+
         Button(
             onClick = { navHostController?.popBackStack() },
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding
